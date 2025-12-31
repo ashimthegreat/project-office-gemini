@@ -1,0 +1,102 @@
+import React, { useState } from 'react';
+
+export default function AdminDashboard() {
+  const [activeTab, setActiveTab] = useState('settings');
+
+  return (
+    <div className="flex min-h-screen bg-slate-100">
+      {/* Sidebar */}
+      <div className="w-64 bg-slate-900 text-white p-6">
+        <h2 className="text-2xl font-bold mb-10 text-blue-400">TB Admin</h2>
+        <nav className="space-y-4">
+          <button 
+            onClick={() => setActiveTab('settings')}
+            className={`w-full text-left p-3 rounded transition ${activeTab === 'settings' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
+          >
+            ⚙️ Site Settings
+          </button>
+          <button 
+            onClick={() => setActiveTab('products')}
+            className={`w-full text-left p-3 rounded transition ${activeTab === 'products' ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
+          >
+            📦 Products
+          </button>
+        </nav>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 p-10">
+        <div className="max-w-4xl mx-auto">
+            {activeTab === 'settings' ? <SettingsEditor /> : <ProductManager />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SettingsEditor() {
+    const [title, setTitle] = useState('');
+    const [status, setStatus] = useState('');
+
+    const handleUpdate = async () => {
+        if (!title) return setStatus('Please enter a title first.');
+        
+        setStatus('Updating...');
+        try {
+            const response = await fetch('https://techbucket-backend.onrender.com/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hero_title: title })
+            });
+
+            if (response.ok) {
+                setStatus('Website updated successfully! ✅');
+                setTitle(''); // Clear input on success
+            } else {
+                setStatus('Update failed. ❌');
+            }
+        } catch (err) {
+            setStatus('Error connecting to server.');
+        }
+    };
+
+    return (
+        <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+            <h3 className="text-xl font-bold mb-2">Edit Home Page Content</h3>
+            <p className="text-slate-500 mb-6 text-sm">This updates the main headline on the public homepage.</p>
+            
+            <div className="space-y-4">
+                <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Hero Title</label>
+                    <input 
+                        type="text" 
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        className="w-full border border-slate-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                        placeholder="e.g. Innovating Your Digital Future" 
+                    />
+                </div>
+                <button 
+                    onClick={handleUpdate}
+                    className="bg-blue-700 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-800 transition w-full md:w-auto"
+                >
+                    Update Website
+                </button>
+                {status && (
+                    <div className={`mt-4 p-3 rounded-md text-sm font-medium ${status.includes('successfully') ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'}`}>
+                        {status}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function ProductManager() {
+    return (
+        <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+            <h3 className="text-xl font-bold mb-4">Product Management</h3>
+            <p className="text-slate-600 italic">This module is ready for Phase 2.2: Adding inventory tables.</p>
+        </div>
+    );
+}
