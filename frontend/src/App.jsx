@@ -1,19 +1,14 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './pages/Home'; // Import the new Home page
 import AdminDashboard from './pages/AdminDashboard';
+import './App.css';
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Public Website (We will build this in Phase 3) */}
-        <Route path="/" element={
-          <div className="p-20 text-center">
-            <h1 className="text-4xl font-bold">Public Website Under Construction</h1>
-            <p className="mt-4">Go to <a href="/admin" className="text-blue-600 underline">/admin</a> to manage data.</p>
-          </div>
-        } />
-
-        {/* Admin Dashboard */}
+        {/* Now the home page shows the real content! */}
+        <Route path="/" element={<Home />} />
         <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
     </Router>
