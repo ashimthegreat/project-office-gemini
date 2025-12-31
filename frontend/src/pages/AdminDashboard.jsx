@@ -12,7 +12,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex min-h-screen bg-slate-50/50">
-      {/* Sidebar - 2026 Style */}
+      {/* Sidebar */}
       <div className="w-64 bg-slate-900 text-white p-6 flex flex-col justify-between sticky top-0 h-screen">
         <div>
           <div className="mb-10 px-2">
@@ -64,7 +64,6 @@ export default function AdminDashboard() {
   );
 }
 
-// Reusable Tab Button Component
 const TabButton = ({ active, onClick, icon, label }) => (
   <button 
     onClick={onClick}
@@ -76,8 +75,6 @@ const TabButton = ({ active, onClick, icon, label }) => (
     {label}
   </button>
 );
-
-/* --- SUB-COMPONENTS (Keep your logic, updated UI) --- */
 
 function SettingsEditor() {
   const [title, setTitle] = useState('');
@@ -112,12 +109,92 @@ function SettingsEditor() {
       <button onClick={handleUpdate} className="bg-slate-900 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-600 transition shadow-lg">
         Update Home Page
       </button>
-      {status && <p className="text-sm font-bold text-blue-600">{status}</p>}
+      {status && <p className="text-sm font-bold text-blue-600 mt-4">{status}</p>}
     </div>
   );
 }
 
 function ProductManager() {
-  const [products, setProducts] = useState([]);
-  // ... rest of your ProductManager code from before ...
-  // Ensure the table styles use "text-slate-900" for 2026
+    const [products, setProducts] = useState([]);
+    const [name, setName] = useState('');
+    const [price, setPrice] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const fetchProducts = async () => {
+        try {
+            const res = await fetch('https://techbucket-backend.onrender.com/api/products');
+            const data = await res.json();
+            setProducts(data);
+        } catch (err) { console.error("Failed to fetch products"); }
+    };
+
+    useEffect(() => { fetchProducts(); }, []);
+
+    const handleAddProduct = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            const response = await fetch('https://techbucket-backend.onrender.com/api/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, price })
+            });
+            if (response.ok) {
+                setName(''); setPrice('');
+                fetchProducts(); 
+            }
+        } catch (err) { console.error("Error adding product"); }
+        finally { setLoading(false); }
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm("Delete this product?")) {
+            try {
+                const response = await fetch(`https://techbucket-backend.onrender.com/api/products/${id}`, {
+                    method: 'DELETE',
+                });
+                if (response.ok) fetchProducts();
+            } catch (err) { console.error("Error deleting product:", err); }
+        }
+    };
+
+    return (
+        <div className="space-y-8">
+            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                <h3 className="font-bold mb-4 text-slate-800">Add New Product</h3>
+                <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input className="bg-white border border-slate-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} required />
+                    <input className="bg-white border border-slate-200 p-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="Price" value={price} onChange={(e) => setPrice(e.target.value)} required />
+                    <button disabled={loading} className="bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition px-4 py-3">
+                        {loading ? 'Adding...' : 'Add Product'}
+                    </button>
+                </form>
+            </div>
+
+            <div className="overflow-hidden rounded-2xl border border-slate-100">
+                <table className="w-full text-left">
+                    <thead className="bg-slate-900 text-white text-xs uppercase tracking-widest">
+                        <tr>
+                            <th className="p-4 font-semibold">Product</th>
+                            <th className="p-4 font-semibold">Price</th>
+                            <th className="p-4 font-semibold text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                        {products.map((product) => (
+                            <tr key={product.id} className="hover:bg-slate-50 transition">
+                                <td className="p-4 text-slate-800 font-medium">{product.name}</td>
+                                <td className="p-4 font-bold text-blue-600">{product.price}</td>
+                                <td className="p-4 text-right">
+                                    <button onClick={() => handleDelete(product.id)} className="text-red-500 font-bold hover:underline text-sm px-2 py-1">
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
