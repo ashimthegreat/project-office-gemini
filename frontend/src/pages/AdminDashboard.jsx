@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('settings');
@@ -51,7 +51,7 @@ function SettingsEditor() {
 
             if (response.ok) {
                 setStatus('Website updated successfully! ✅');
-                setTitle(''); // Clear input on success
+                setTitle(''); 
             } else {
                 setStatus('Update failed. ❌');
             }
@@ -93,10 +93,95 @@ function SettingsEditor() {
 }
 
 function ProductManager() {
+    const [products, setProducts] = useState([]);
+    const [name, setName] = useState('');
+    const [price, setPrice] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    // Fetch existing products
+    const fetchProducts = async () => {
+        try {
+            const res = await fetch('https://techbucket-backend.onrender.com/api/products');
+            const data = await res.json();
+            setProducts(data);
+        } catch (err) {
+            console.error("Failed to fetch products");
+        }
+    };
+
+    useEffect(() => {
+        fetchProducts();
+    }, []);
+
+    const handleAddProduct = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            const response = await fetch('https://techbucket-backend.onrender.com/api/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, price })
+            });
+
+            if (response.ok) {
+                setName('');
+                setPrice('');
+                fetchProducts(); // Refresh the list
+            }
+        } catch (err) {
+            console.error("Error adding product");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
-        <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
-            <h3 className="text-xl font-bold mb-4">Product Management</h3>
-            <p className="text-slate-600 italic">This module is ready for Phase 2.2: Adding inventory tables.</p>
+        <div className="space-y-6">
+            <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+                <h3 className="text-xl font-bold mb-4">Add New Product</h3>
+                <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input 
+                        className="border border-slate-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
+                        placeholder="Product Name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required
+                    />
+                    <input 
+                        className="border border-slate-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
+                        placeholder="Price (e.g. Rs. 50,000)"
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
+                        required
+                    />
+                    <button 
+                        disabled={loading}
+                        className="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 transition"
+                    >
+                        {loading ? 'Adding...' : 'Add Product'}
+                    </button>
+                </form>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <table className="w-full text-left">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 text-sm uppercase">
+                        <tr>
+                            <th className="p-4 font-semibold">Product Name</th>
+                            <th className="p-4 font-semibold">Price</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                        {products.map((product) => (
+                            <tr key={product.id} className="hover:bg-slate-50 transition">
+                                <td className="p-4 text-slate-800">{product.name}</td>
+                                <td className="p-4 font-bold text-blue-600">{product.price}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+                {products.length === 0 && <p className="p-10 text-center text-slate-400">No products added yet.</p>}
+            </div>
         </div>
     );
 }
